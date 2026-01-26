@@ -1,11 +1,15 @@
-import discord
+import asyncio
 import os
+
+import discord
+from aiohttp import web
 from discord.ext import commands
 from dotenv import load_dotenv
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 ID_WELCOME_CHANNEL = int(os.getenv('WELCOME_CHANNEL_ID'))  # ID do canal de boas-vindas
+PORT = int(os.getenv('PORT', 10000))
 
 intents = discord.Intents.default()
 intents.message_content = True 
@@ -40,6 +44,21 @@ class MyBot(commands.Bot):
 
 bot = MyBot()
 
+
+# Servidor HTTP simples para manter o processo vivo em hostings que exigem porta aberta
+async def healthcheck(_request: web.Request) -> web.Response:
+    return web.Response(text="ok")
+
+
+async def start_web_server() -> None:
+    app = web.Application()
+    app.router.add_get("/", healthcheck)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    await site.start()
+
 # Comando simples para testar manualmente
 @bot.tree.command(name="testar_boas_vindas", description="Simula uma entrada de membro")
 async def test_welcome(interaction: discord.Interaction):
@@ -49,4 +68,8 @@ async def test_welcome(interaction: discord.Interaction):
       await interaction.response.send_message("Teste de boas-vindas enviado!", ephemeral=True)
 
 if __name__ == "__main__":
-    bot.run(TOKEN)
+    async def main():
+        await start_web_server()
+        await bot.start(TOKEN)
+
+    asyncio.run(main())
