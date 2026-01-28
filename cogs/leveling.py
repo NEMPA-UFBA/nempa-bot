@@ -37,7 +37,7 @@ class Leveling(commands.Cog):
             await message.channel.send(f"🎉 Congrats {message.author.mention}! You leveled up to **Level {level}**!")
             await self.update_member_rank(message.author, level)
 
-        self._db.update_user(user_id, xp, level)
+        db.update_user(user_id, xp, level)
         
         # Importante para os comandos funcionarem
         await self.bot.process_commands(message)
@@ -98,7 +98,7 @@ class Leveling(commands.Cog):
     @app_commands.command(name="rank", description="Shows your current level and XP")
     async def rank(self, interaction: discord.Interaction, member: discord.Member = None):
         target = member or interaction.user
-        data = self.bot._db.get_user(target.id)
+        data = db.get_user(target.id)
 
         if not data:
             await interaction.response.send_message("This user does not have any XP yet.", ephemeral=True)
