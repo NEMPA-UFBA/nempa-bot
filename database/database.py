@@ -54,3 +54,5 @@ class Db_Manager:
         self.cursor.execute("SELECT COUNT(*) FROM users WHERE xp > ?", (xp,))
         result = self.cursor.fetchone()
         return result[0] + 1 if result else 1
+
+db = Db_Manager()  # Instância global do gerenciador de banco de dados
