@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from database.database import db
+from database.users import db
 
 RANKS = {
     5: 1465905527484715118,  # Nível 5: Rank "Beginner"
@@ -44,7 +44,7 @@ class Leveling(commands.Cog):
 
     async def update_member_rank(self, member, level):
         # Verifica se o nível atual do utilizador está no nosso dicionário de RANKS
-        if level in RANKS:
+        if level in RANKS or level > max(RANKS.keys()):
             role_id = RANKS[level]
             role = member.guild.get_role(role_id)
             if role:
@@ -71,7 +71,7 @@ class Leveling(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
 
-        data = self.bot._db.get_user(member.id)
+        data = db.get_user(member.id)
         if data:
             xp, level = data
         else:
@@ -86,7 +86,7 @@ class Leveling(commands.Cog):
             leveled_up = True
             next_level_xp = 100 * (level ** 2)
 
-        self.bot._db.update_user(member.id, xp, level)
+        db.update_user(member.id, xp, level)
 
         response = f"✅ {amount} XP given to {member.mention}. New XP: {xp}, Level: {level}."
         if leveled_up:
@@ -109,10 +109,9 @@ class Leveling(commands.Cog):
 
         embed = discord.Embed(title=f"Status of {target.name}", color=discord.Color.blue())
         embed.set_thumbnail(url=target.display_avatar.url)
-        embed.add_field(name="Ranking Position", value=f"#{self.bot._db.get_user_position(xp)}", inline=True)
+        embed.add_field(name="Ranking Position", value=f"#{db.get_user_position(xp)}", inline=True)
         embed.add_field(name="Level", value=str(level), inline=True)
         embed.add_field(name="Total XP", value=f"{xp}/{next_xp}", inline=True)
-        
         
         await interaction.response.send_message(embed=embed)
     

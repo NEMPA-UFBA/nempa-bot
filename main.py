@@ -3,10 +3,7 @@ import os
 import discord
 from aiohttp import web
 from discord.ext import commands
-from discord import app_commands
 from dotenv import load_dotenv
-import urllib.parse
-from database.database import Db_Manager
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
