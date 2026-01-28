@@ -25,7 +25,6 @@ class MyBot(commands.Bot):
             chunk_guilds_at_startup=False, # Não carrega todos os membros ao ligar
             member_cache_flags=discord.MemberCacheFlags.none() # Não guarda membros na RAM,
         )
-        self._db = Db_Manager()
 
     async def setup_hook(self):
         for filename in os.listdir('./cogs'):
