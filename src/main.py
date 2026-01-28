@@ -11,7 +11,7 @@ import urllib.parse
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 ID_WELCOME_CHANNEL = int(os.getenv('WELCOME_CHANNEL_ID'))  # ID do canal de boas-vindas
-PORT = int(os.getenv('PORT', 10000))
+PORT = int(os.getenv('PORT', 8080))
 
 intents = discord.Intents.default()
 intents.message_content = True 
