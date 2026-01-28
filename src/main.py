@@ -1,10 +1,12 @@
 import asyncio
 import os
-
+from discord import File
 import discord
 from aiohttp import web
 from discord.ext import commands
+from discord import app_commands
 from dotenv import load_dotenv
+import urllib.parse
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -17,7 +19,7 @@ intents.members = True  # ESSENCIAL para detectar novos membros
 
 class MyBot(commands.Bot):
     def __init__(self):
-        super().__init__(command_prefix="!", intents=intents)
+        super().__init__(command_prefix="!!", intents=intents)
 
     async def on_ready(self):
         print(f'Bot logado como {self.user}!')
@@ -41,9 +43,13 @@ class MyBot(commands.Bot):
             embed.set_footer(text=f"ID do usuário: {member.id}")
             
             await channel.send(embed=embed)
+    
+    async def on_message(self, message):
+        if message.author.bot:
+            return  # Ignorar mensagens de bots
+        return await super().on_message(message)
 
 bot = MyBot()
-
 
 # Servidor HTTP simples para manter o processo vivo em hostings que exigem porta aberta
 async def healthcheck(_request: web.Request) -> web.Response:
@@ -60,12 +66,52 @@ async def start_web_server() -> None:
     await site.start()
 
 # Comando simples para testar manualmente
-@bot.tree.command(name="testar_boas_vindas", description="Simula uma entrada de membro")
-async def test_welcome(interaction: discord.Interaction):
-    # Simula o evento para o próprio usuário que digitou o comando
-    if (interaction.user.guild_permissions.administrator):
-      await bot.on_member_join(interaction.user)
-      await interaction.response.send_message("Teste de boas-vindas enviado!", ephemeral=True)
+choices = [
+    app_commands.Choice(name="Pequeno", value=r"\small"),
+    app_commands.Choice(name="Normal", value=r"\normalsize"),
+    app_commands.Choice(name="Grande", value=r"\large"),
+    app_commands.Choice(name="Muito Grande", value=r"\huge"),
+    app_commands.Choice(name="Gigante", value=r"\Huge")
+]
+
+@bot.tree.command(name="latex", description="Renderiza LaTeX com tamanho opcional")
+@app_commands.describe(
+    formula="A fórmula LaTeX (ex: a^2 + b^2 = c^2)",
+    tamanho="Escolha o tamanho da renderização"
+)
+@app_commands.choices(tamanho=choices)
+async def latex(interaction: discord.Interaction, formula: str, tamanho: app_commands.Choice[str] = None):
+    await interaction.response.defer()
+    
+    try:
+        # Se o usuário não escolher nada, usamos \huge como padrão para ficar visível
+        cmd_tamanho = tamanho.value if tamanho else r"\huge"
+        
+        # Montamos a string final para a API
+        # \dpi{200} garante a qualidade da imagem
+        prefixo = rf"\dpi{{200}} {cmd_tamanho} \color{{White}} "
+        formula_completa = prefixo + formula
+        
+        encoded_formula = urllib.parse.quote(formula_completa)
+        url = f"https://latex.codecogs.com/png.latex?{encoded_formula}"
+        
+        # Mostramos qual tamanho foi usado na resposta
+        txt_tamanho = tamanho.name if tamanho else "Muito Grande (Padrão)"
+        await interaction.followup.send(url)
+        
+    except Exception as e:
+        await interaction.followup.send(f"Erro: {e}", ephemeral=True)
+      
+@bot.tree.command(name="give_daily_reward", description="Dá XP ao usuário (comando de teste)")
+@app_commands.describe(user_id="Id do usuário para dar XP")
+async def give_xp(interaction: discord.Interaction,user_id: str):
+    # Implementar a lógica para dar XP ao usuário aqui
+    
+    await interaction.response.send_message(f"!give {user_id} 1000 XP", ephemeral=True)
+
+@bot.tree.command(name="ping", description="Responde com Pong!")
+async def ping(interaction: discord.Interaction):
+    await interaction.response.send_message("Pong!", ephemeral=True)
 
 if __name__ == "__main__":
     async def main():
