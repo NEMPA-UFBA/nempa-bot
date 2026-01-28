@@ -76,7 +76,7 @@ async def main():
     
     @bot.tree.command(name="ping", description="Responds with Pong!")
     async def ping(interaction: discord.Interaction):
-        await interaction.response.send_message("Pong!!!!!!", ephemeral=True)
+        await interaction.response.send_message("Pong!", ephemeral=True)
 
     await start_web_server()
     async with bot:
