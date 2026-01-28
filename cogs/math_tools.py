@@ -4,7 +4,7 @@ from discord import app_commands
 import urllib
 
 class MathTools(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
     
     choices = [
