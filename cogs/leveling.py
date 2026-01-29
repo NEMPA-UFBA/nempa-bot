@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-from database.users import db
+from database.users import db_user
 
 RANKS = {
     5: 1465905527484715118,  # Nível 5: Rank "Beginner"
@@ -19,7 +19,7 @@ class Leveling(commands.Cog):
         if message.author.bot:
             return  # Ignorar mensagens de bots
         user_id = message.author.id
-        data = db.get_user(user_id)
+        data = db_user.get_user(user_id)
 
         if data:
             xp, level = data
@@ -37,7 +37,7 @@ class Leveling(commands.Cog):
             await message.channel.send(f"🎉 Congrats {message.author.mention}! You leveled up to **Level {level}**!")
             await self.update_member_rank(message.author, level)
 
-        db.update_user(user_id, xp, level)
+        db_user.update_user(user_id, xp, level)
         
         # Importante para os comandos funcionarem
         await self.bot.process_commands(message)
@@ -45,7 +45,7 @@ class Leveling(commands.Cog):
     async def update_member_rank(self, member, level):
         # Verifica se o nível atual do utilizador está no nosso dicionário de RANKS
         if level in RANKS or level > max(RANKS.keys()):
-            role_id = RANKS[level]
+            role_id = RANKS[level] if level in RANKS else RANKS[max(RANKS.keys())]
             role = member.guild.get_role(role_id)
             if role:
                 try:
@@ -71,7 +71,7 @@ class Leveling(commands.Cog):
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
             return
 
-        data = db.get_user(member.id)
+        data = db_user.get_user(member.id)
         if data:
             xp, level = data
         else:
@@ -86,7 +86,7 @@ class Leveling(commands.Cog):
             leveled_up = True
             next_level_xp = 100 * (level ** 2)
 
-        db.update_user(member.id, xp, level)
+        db_user.update_user(member.id, xp, level)
 
         response = f"✅ {amount} XP given to {member.mention}. New XP: {xp}, Level: {level}."
         if leveled_up:
@@ -98,7 +98,7 @@ class Leveling(commands.Cog):
     @app_commands.command(name="rank", description="Shows your current level and XP")
     async def rank(self, interaction: discord.Interaction, member: discord.Member = None):
         target = member or interaction.user
-        data = db.get_user(target.id)
+        data = db_user.get_user(target.id)
 
         if not data:
             await interaction.response.send_message("This user does not have any XP yet.", ephemeral=True)
@@ -109,7 +109,7 @@ class Leveling(commands.Cog):
 
         embed = discord.Embed(title=f"Status of {target.name}", color=discord.Color.blue())
         embed.set_thumbnail(url=target.display_avatar.url)
-        embed.add_field(name="Ranking Position", value=f"#{db.get_user_position(xp)}", inline=True)
+        embed.add_field(name="Ranking Position", value=f"#{db_user.get_user_position(xp)}", inline=True)
         embed.add_field(name="Level", value=str(level), inline=True)
         embed.add_field(name="Total XP", value=f"{xp}/{next_xp}", inline=True)
         
@@ -118,7 +118,7 @@ class Leveling(commands.Cog):
     @app_commands.command(name="leaderboard", description="Shows the ranking of the top players")
     async def leaderboard(self, interaction: discord.Interaction):
         # Buscamos os 10 melhores ordenados por XP
-        results = db.get_top_users()
+        results = db_user.get_top_users()
 
         if not results:
             return await interaction.response.send_message("No data available.", ephemeral=True)

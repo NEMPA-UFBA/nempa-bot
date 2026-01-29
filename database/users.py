@@ -1,6 +1,6 @@
 import sqlite3
 
-class Db_Manager:
+class UserDatabaseManager:
     def __init__(self, db_name="levels.db"):
         self.conn = sqlite3.connect(db_name)
         self.cursor = self.conn.cursor()
@@ -55,4 +55,4 @@ class Db_Manager:
         result = self.cursor.fetchone()
         return result[0] + 1 if result else 1
 
-db = Db_Manager()  # Instância global do gerenciador de banco de dados
+db_user = UserDatabaseManager()  # Instância global do gerenciador de banco de dados
