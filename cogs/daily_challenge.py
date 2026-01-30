@@ -55,7 +55,7 @@ class DailyChallenge(commands.Cog):
             timestamp=interaction.created_at
         )
         embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar.url)
-        msg_sent = await interaction.response.send_message(embed=embed, ephemeral=True)
+        msg_sent = await interaction.response.send_message(embed=embed)
         
         db_daily_challenge_answer.save_challenge_answer(msg_sent.id, interaction.user.id, answer)
         
