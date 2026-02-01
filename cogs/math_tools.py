@@ -11,8 +11,7 @@ class MathTools(commands.Cog):
         app_commands.Choice(name="Pequeno", value=r"\small"),
         app_commands.Choice(name="Normal", value=r"\normalsize"),
         app_commands.Choice(name="Grande", value=r"\large"),
-        app_commands.Choice(name="Muito Grande", value=r"\huge"),
-        app_commands.Choice(name="Gigante", value=r"\Huge")
+        app_commands.Choice(name="Muito Grande", value=r"\huge")
     ]
 
     @app_commands.command(name="latex", description="Renders LaTeX with optional size")
