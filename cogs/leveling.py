@@ -55,7 +55,7 @@ class Leveling(commands.Cog):
                     
                     # Opcional: Enviar mensagem no canal
                     channel = member.guild.system_channel or member.guild.text_channels[0]
-                    await channel.send(f"🎖️ {member.mention} reached the Rank **{role.name[7:0].capitalize()}**!")
+                    await channel.send(f"🎖️ {member.mention} reached the Rank **{str(role.name[7:]).capitalize()}**!")
                 except discord.Forbidden:
                     print("Error: The bot does not have permission to manage roles.")
                 except Exception as e:

@@ -13,6 +13,7 @@ class DailyChallenge(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.target_time = time(hour=8, minute=0, tzinfo=pytz.timezone('America/Bahia'))
+        self.end_time = time(hour=22, minute=0, tzinfo=pytz.timezone('America/Bahia'))
         self.daily_message.start()
     
     def cog_unload(self):
@@ -43,7 +44,15 @@ class DailyChallenge(commands.Cog):
             await interaction.response.send_message(f"This command can only be used in the <#{ID_CHANNEL_DAILY_CHALLENGE}> channel.", ephemeral=True)
             return
         
-        user_answered = db_daily_challenge_answer.check_user_answered(interaction.user.id, datetime.now(pytz.timezone('America/Bahia')))
+        if datetime.now(pytz.timezone('America/Bahia')).time() < self.target_time:
+            await interaction.response.send_message("You can only answer the daily challenge after 8:00 AM Bahia time.", ephemeral=True)
+            return
+        
+        if datetime.now(pytz.timezone('America/Bahia')).time() > self.end_time:
+            await interaction.response.send_message("The time to answer today's challenge has ended (after 10:00 PM Bahia time).", ephemeral=True)
+            return
+        
+        user_answered = db_daily_challenge_answer.check_user_answered(interaction.user.id)
         if user_answered:
             await interaction.response.send_message("You have already answered today's challenge.", ephemeral=True)
             return
