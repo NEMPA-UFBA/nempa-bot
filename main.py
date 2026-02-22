@@ -43,12 +43,22 @@ class MyBot(commands.Bot):
 
         if channel:
             embed = discord.Embed(
-                title=f"Bem-vindo(a) ao {member.guild.name}!",
-                description=f"Olá {member.mention}, que bom ter você aqui!",
+                title=f"🚀 Welcome to {member.guild.name}! 🧮!",
+                description=f"""
+Hello and welcome, {member.mention}! We are thrilled to have you here. Whether you're here to solve complex equations, build the next big web app, or just hang out with fellow tech enthusiasts, you’ve found the right place.
+
+Our community is a space for developers and mathematicians of all ages and skill levels to collaborate, learn, and grow together.
+                """,
+                # description=f"Olá {member.mention}, que bom ter você aqui!",
                 color=discord.Color.green()
             )
+            embed.add_field(
+                name="📜 A Quick Reminder:",
+                value="Please be respectful and supportive of one another. We believe that great things happen when different minds come together to solve problems!",
+                inline=False
+            )
             embed.set_thumbnail(url=member.display_avatar.url)
-            embed.set_footer(text=f"ID do usuário: {member.id}")
+            embed.set_footer(text=f"User ID: {member.id}")
             
             await channel.send(embed=embed)
 
