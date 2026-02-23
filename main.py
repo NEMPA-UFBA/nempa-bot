@@ -4,6 +4,7 @@ import discord
 from aiohttp import web
 from discord.ext import commands
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -38,7 +39,7 @@ class MyBot(commands.Bot):
             print(f"Erro ao sincronizar: {e}")
 
     # EVENTO DE BOAS-VINDAS
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         channel = member.guild.get_channel(ID_WELCOME_CHANNEL)
 
         if channel:
@@ -59,6 +60,12 @@ Our community is a space for developers and mathematicians of all ages and skill
             )
             embed.set_thumbnail(url=member.display_avatar.url)
             embed.set_footer(text=f"User ID: {member.id}")
+            
+            # Verifica se a data atual está entre os dias 23 e 27
+            day = datetime.now().day
+            month = datetime.now().month
+            if 23 <= day <= 27 and month == 2:  # Verifica se é fevereiro e se o dia está entre 23 e 27
+                member.add_roles(member.guild.get_role(1475270433107349545))  # Adiciona o cargo de "Olympic Week" automaticamente
             
             await channel.send(embed=embed)
 
