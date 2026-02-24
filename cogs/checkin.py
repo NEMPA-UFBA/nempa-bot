@@ -64,12 +64,12 @@ class CheckIn(commands.Cog):
         
         if senha == self.correct_password:
             try:
-                if db_user.get_checkin_answer(interaction.user.id, senha):
-                    await interaction.response.send_message(
-                        "❌ You have already checked in!",
-                        ephemeral=True
-                    )
-                    return
+                # if db_user.get_checkin_answer(interaction.user.id, senha):
+                #     await interaction.response.send_message(
+                #         "❌ You have already checked in!",
+                #         ephemeral=True
+                #     )
+                #     return
                 role = interaction.guild.get_role(self.role_id)
                 if role:
                     await interaction.user.add_roles(role)
@@ -77,9 +77,19 @@ class CheckIn(commands.Cog):
                         f"✅ Check-in successful! You have received the role {role.mention}",
                         ephemeral=True
                     )
-                    xp, level = db_user.add_xp(interaction.user.id, 500)  # Adiciona o usuário ao banco de dados com XP 0 e nível 1
+                    xp, level = db_user.add_xp(interaction.user.id, 500)
                     db_user.record_checkin(interaction.user.id, senha)  # Registra o check-in no banco de dados com a resposta fornecida
+                    checkins_count = db_user.count_checkins()
                     
+                    if checkins_count <= 3:
+                        embed = discord.Embed(
+                            title="🎉 Early Check-in Bonus! 🎉",
+                            description=f"{interaction.user.mention} is one of the first 3 to check in and has received a bonus!",
+                            colour=discord.Color.gold()
+                        )
+                        embed.set_footer(text=f"Total check-ins so far: {checkins_count}")
+                        embed.set_thumbnail(url=interaction.user.display_avatar.url)
+                        await interaction.followup.send(embed=embed)
                     # Obter o cargo apropriado para o nível
                     rank_id = get_rank_for_level(level)
                     if rank_id:
@@ -88,7 +98,14 @@ class CheckIn(commands.Cog):
                     else:
                         rank_name = "No Rank Yet"
                     
-                    await interaction.followup.send(f"🎉 You gained 500 XP! Your current XP is {xp}, Level {level}, and your rank is {rank_name}.", ephemeral=True)
+                    embed = discord.Embed(
+                        title="🎉 XP and Level Update! 🎉",
+                        description=f"🎉 You gained 500 XP! Your current XP is {xp}, Level {level}, and your rank is {rank_name}.\nYou can see the leaderboard using the `/leaderboard` command.",
+                        colour=discord.Color.blue()
+                    )
+                    await interaction.followup.send(embed=embed, ephemeral=True)
+                    
+                    
                 else:
                     await interaction.response.send_message(
                         "❌ Role not found. Please contact an administrator.",
