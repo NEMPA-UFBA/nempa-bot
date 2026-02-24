@@ -1,4 +1,7 @@
 import sqlite3
+import os
+
+SECRET_PASSWORD = os.getenv('SECRET_PASSWORD')  # Substitua pela senha correta
 
 class UserDatabaseManager:
     def __init__(self, db_name="levels.db"):
@@ -105,5 +108,17 @@ class UserDatabaseManager:
         except Exception as e:
             print(f"Erro ao verificar check-in: {e}")
             return False
+    
+    def count_checkins(self):
+        try:
+            self.cursor.execute('''
+                SELECT COUNT(*) FROM checkins 
+                WHERE answer = ?
+            ''', (SECRET_PASSWORD,))
+            result = self.cursor.fetchone()
+            return result[0] if result else 0
+        except Exception as e:
+            print(f"Erro ao contar check-ins: {e}")
+            return 0
 
 db_user = UserDatabaseManager()  # Instância global do gerenciador de banco de dados
