@@ -128,7 +128,6 @@ class Leveling(commands.Cog):
             # Tentamos buscar o nome do usuário pelo ID
             # Se o bot não encontrar (usuário saiu do server), usamos 'Membro Antigo'
             user = await self.bot.fetch_user(u_id)
-            print(user)
             name = user.display_name if user else f"ID: {u_id}"
             
             # Medalhas para os 3 primeiros
