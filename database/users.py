@@ -54,5 +54,25 @@ class UserDatabaseManager:
         self.cursor.execute("SELECT COUNT(*) FROM users WHERE xp > ?", (xp,))
         result = self.cursor.fetchone()
         return result[0] + 1 if result else 1
+    
+    def level_up(self, user_id):
+        data = self.get_user(user_id)
+        if data:
+            xp, level = data
+            level += 1
+            self.update_user(user_id, xp, level)
+            return level
+        return None
+    
+    def add_xp(self, user_id, amount):
+        data = self.get_user(user_id)
+        if data:
+            xp, level = data
+            xp += amount
+            self.update_user(user_id, xp, level)
+            return xp, level
+        else:
+            self.update_user(user_id, amount, 1)  # Novo usuário começa no nível 1
+            return amount, 1
 
 db_user = UserDatabaseManager()  # Instância global do gerenciador de banco de dados

@@ -2,6 +2,22 @@ import discord
 from discord.ext import commands
 import os
 from datetime import datetime
+from database.users import db_user
+from cogs.leveling import RANKS
+
+
+def get_rank_for_level(level):
+    """Retorna o cargo apropriado para o nível do usuário"""
+    if level >= 50:
+        return RANKS[50]  # Teacher
+    elif level >= 20:
+        return RANKS[20]  # Scientist
+    elif level >= 10:
+        return RANKS[10]  # Student
+    elif level >= 5:
+        return RANKS[5]   # Beginner
+    return None
+
 
 class CheckIn(commands.Cog):
     def __init__(self, bot):
@@ -56,6 +72,17 @@ class CheckIn(commands.Cog):
                     f"✅ Check-in successful! You have received the role {role.mention}",
                     ephemeral=True
                 )
+                xp, level = db_user.add_xp(interaction.user.id, 500)  # Adiciona o usuário ao banco de dados com XP 0 e nível 1
+                
+                # Obter o cargo apropriado para o nível
+                rank_id = get_rank_for_level(level)
+                if rank_id:
+                    rank_role = interaction.guild.get_role(rank_id)
+                    rank_name = rank_role.name if rank_role else "Unknown"
+                else:
+                    rank_name = "No Rank Yet"
+                
+                await interaction.followup.send(f"🎉 You gained 500 XP! Your current XP is {xp}, Level {level}, and your rank is {rank_name}.", ephemeral=True)
             else:
                 await interaction.response.send_message(
                     "❌ Role not found. Please contact an administrator.",
