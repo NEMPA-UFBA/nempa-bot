@@ -41,7 +41,12 @@ class CheckIn(commands.Cog):
         day = datetime.now().day
         month = datetime.now().month
         if 23 <= day <= 27 and month == 2:  # Verifica se é fevereiro e se o dia está entre 23 e 27
-            await interaction.user.add_roles(interaction.guild.get_role(1475270433107349545))  # Adiciona o cargo de "Olympic Week" automaticamente
+            olympic_role = interaction.guild.get_role(1475270433107349545)
+            if olympic_role:
+                try:
+                    await interaction.user.add_roles(olympic_role)
+                except Exception as e:
+                    print(f"[checkin] Error assigning Olympic Week role: {e}")
         else:
             await interaction.response.send_message(
                 "❌ Check-in is only available from February 23 to 27.",
@@ -57,37 +62,45 @@ class CheckIn(commands.Cog):
             )
             return
         
-        role = interaction.guild.get_role(self.role_id)
-        if role in interaction.user.roles:
-            await interaction.response.send_message(
-                "❌ You have already checked in!",
-                ephemeral=True
-            )
-            return
-        
         if senha == self.correct_password:
-            if role:
-                await interaction.user.add_roles(role)
-                await interaction.response.send_message(
-                    f"✅ Check-in successful! You have received the role {role.mention}",
-                    ephemeral=True
-                )
-                xp, level = db_user.add_xp(interaction.user.id, 500)  # Adiciona o usuário ao banco de dados com XP 0 e nível 1
-                
-                # Obter o cargo apropriado para o nível
-                rank_id = get_rank_for_level(level)
-                if rank_id:
-                    rank_role = interaction.guild.get_role(rank_id)
-                    rank_name = rank_role.name if rank_role else "Unknown"
+            try:
+                if db_user.get_checkin_answer(interaction.user.id, senha):
+                    await interaction.response.send_message(
+                        "❌ You have already checked in!",
+                        ephemeral=True
+                    )
+                    return
+                role = interaction.guild.get_role(self.role_id)
+                if role:
+                    await interaction.user.add_roles(role)
+                    await interaction.response.send_message(
+                        f"✅ Check-in successful! You have received the role {role.mention}",
+                        ephemeral=True
+                    )
+                    xp, level = db_user.add_xp(interaction.user.id, 500)  # Adiciona o usuário ao banco de dados com XP 0 e nível 1
+                    db_user.record_checkin(interaction.user.id, senha)  # Registra o check-in no banco de dados com a resposta fornecida
+                    
+                    # Obter o cargo apropriado para o nível
+                    rank_id = get_rank_for_level(level)
+                    if rank_id:
+                        rank_role = interaction.guild.get_role(rank_id)
+                        rank_name = rank_role.name if rank_role else "Unknown"
+                    else:
+                        rank_name = "No Rank Yet"
+                    
+                    await interaction.followup.send(f"🎉 You gained 500 XP! Your current XP is {xp}, Level {level}, and your rank is {rank_name}.", ephemeral=True)
                 else:
-                    rank_name = "No Rank Yet"
-                
-                await interaction.followup.send(f"🎉 You gained 500 XP! Your current XP is {xp}, Level {level}, and your rank is {rank_name}.", ephemeral=True)
-            else:
+                    await interaction.response.send_message(
+                        "❌ Role not found. Please contact an administrator.",
+                        ephemeral=True
+                    )
+            except Exception as e:
+                print(f"Error assigning role: {e}")
                 await interaction.response.send_message(
-                    "❌ Role not found. Please contact an administrator.",
+                    "❌ An error occurred while assigning the role. Please contact an administrator.",
                     ephemeral=True
                 )
+            
             
             # Log the successful check-in
             if log_channel:
