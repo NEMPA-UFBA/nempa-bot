@@ -32,6 +32,13 @@ class UserDatabaseManager:
             self.conn.commit()
         except Exception as e:
             print(f"Erro ao criar tabelas: {e}")
+            
+        try:
+            self.cursor.execute('''
+                ALTER TABLE checkins ADD COLUMN question_id INTEGER
+                                ''')
+        except Exception as e:
+            print(f"Erro ao criar tabela de check-ins: {e}")
 
     def get_user(self, user_id):
         try:
@@ -88,11 +95,11 @@ class UserDatabaseManager:
             self.update_user(user_id, amount, 1)  # Novo usuário começa no nível 1
             return amount, 1
 
-    def record_checkin(self, user_id, answer):
+    def record_checkin(self, user_id, answer, question_id):
         try:
             self.cursor.execute('''
-                INSERT INTO checkins (user_id, answer) VALUES (?, ?)
-            ''', (user_id, answer))  # Default answer for new check-ins
+                INSERT INTO checkins (user_id, answer, question_id) VALUES (?, ?, ?)
+            ''', (user_id, answer, question_id))
             self.conn.commit()
         except Exception as e:
             print(f"Erro ao registrar check-in: {e}")
@@ -109,16 +116,43 @@ class UserDatabaseManager:
             print(f"Erro ao verificar check-in: {e}")
             return False
     
-    def count_checkins(self):
+    def count_checkins(self, answer):
         try:
             self.cursor.execute('''
                 SELECT COUNT(*) FROM checkins 
                 WHERE answer = ?
-            ''', (SECRET_PASSWORD,))
+            ''', (answer,))
             result = self.cursor.fetchone()
             return result[0] if result else 0
         except Exception as e:
             print(f"Erro ao contar check-ins: {e}")
             return 0
+        
+    def count_checkins_by_question(self, question_id):
+        try:
+            self.cursor.execute('''
+                SELECT COUNT(*) FROM checkins 
+                WHERE question_id = ?
+            ''', (question_id,))
+            result = self.cursor.fetchone()
+            return result[0] if result else 0
+        except Exception as e:
+            print(f"Erro ao contar check-ins por questão: {e}")
+            return 0
+    
+    def get_leaderboard_by_question(self, question_id):
+        try:
+            self.cursor.execute('''
+                SELECT user_id, COUNT(*) as checkin_count 
+                FROM checkins 
+                WHERE question_id = ?
+                GROUP BY user_id 
+                ORDER BY created_at DESC 
+                LIMIT 10
+            ''', (question_id,))
+            return self.cursor.fetchall()
+        except Exception as e:
+            print(f"Erro ao obter leaderboard: {e}")
+            return []
 
 db_user = UserDatabaseManager()  # Instância global do gerenciador de banco de dados
