@@ -8,15 +8,25 @@ class UserDatabaseManager:
 
     def create_tables(self):
         try:
-          # Criamos a tabela se não existir
-          self.cursor.execute('''
+            # Criamos a tabela se não existir
+            self.cursor.execute('''
               CREATE TABLE IF NOT EXISTS users (
                   user_id INTEGER PRIMARY KEY,
                   xp INTEGER DEFAULT 0,
                   level INTEGER DEFAULT 1
               )
           ''')
-          self.conn.commit()
+            self.conn.commit()
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS checkins (
+                    user_id INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    answer TEXT,
+                    PRIMARY KEY (user_id, created_at),
+                    FOREIGN KEY (user_id) REFERENCES users(user_id)
+                )
+            ''')
+            self.conn.commit()
         except Exception as e:
             print(f"Erro ao criar tabelas: {e}")
 
@@ -74,5 +84,26 @@ class UserDatabaseManager:
         else:
             self.update_user(user_id, amount, 1)  # Novo usuário começa no nível 1
             return amount, 1
+
+    def record_checkin(self, user_id, answer):
+        try:
+            self.cursor.execute('''
+                INSERT INTO checkins (user_id, answer) VALUES (?, ?)
+            ''', (user_id, answer))  # Default answer for new check-ins
+            self.conn.commit()
+        except Exception as e:
+            print(f"Erro ao registrar check-in: {e}")
+    
+    def get_checkin_answer(self, user_id, answer):
+        try:
+            self.cursor.execute('''
+                SELECT COUNT(*) FROM checkins 
+                WHERE user_id = ? AND answer = ?
+            ''', (user_id, answer))
+            result = self.cursor.fetchone()
+            return result[0] > 0 if result else False
+        except Exception as e:
+            print(f"Erro ao verificar check-in: {e}")
+            return False
 
 db_user = UserDatabaseManager()  # Instância global do gerenciador de banco de dados
