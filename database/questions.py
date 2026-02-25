@@ -14,7 +14,7 @@ class QuestionDatabaseManager:
                     question TEXT NOT NULL,
                     answer TEXT NOT NULL UNIQUE,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    target_date DATE,
+                    target_date DATE
                 )
             ''')
             self.conn.commit()
