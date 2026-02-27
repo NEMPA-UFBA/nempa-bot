@@ -61,6 +61,31 @@ class Leveling(commands.Cog):
                 except Exception as e:
                     print(f"Error adding role: {e}")
     
+    async def add_xp(self, user_id, amount, member: discord.Member = None):
+        data = db_user.get_user(user_id)
+        if data:
+            xp, level = data
+        else:
+            xp, level = 0, 1
+
+        xp += amount
+        next_level_xp = 100 * (level ** 2)
+
+        leveled_up = False
+        while xp >= next_level_xp:
+            level += 1
+            leveled_up = True
+            next_level_xp = 100 * (level ** 2)
+
+        db_user.update_user(user_id, xp, level)
+
+        if leveled_up and member:
+            await self.update_member_rank(member, level)
+
+        return xp, level
+
+
+
     @app_commands.command(name="give_xp", description="Give XP to a member (management only)")
     @app_commands.describe(
         member="Member to receive XP",
