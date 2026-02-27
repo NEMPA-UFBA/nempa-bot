@@ -151,6 +151,7 @@ class CheckIn(commands.Cog):
             return
         
         if senha == question[2]:
+            response_sent = False
             try:
                 if db_user.get_checkin_answer(interaction.user.id, senha):
                     await interaction.response.send_message(
@@ -166,17 +167,23 @@ class CheckIn(commands.Cog):
                             f"✅ Check-in successful! You have received the role {role.mention}",
                             ephemeral=True
                         )
+                        response_sent = True
                     else:
                         await interaction.response.send_message(
                             f"✅ Check-in successful! You already had the role {role.mention}",
                             ephemeral=True
                         )
+                        response_sent = True
                     
-                    xp, level = db_user.add_xp(interaction.user.id, 500)
+                    leveling_cog = self.bot.get_cog("Leveling")
+                    if leveling_cog:
+                        xp, level = await leveling_cog.add_xp(interaction.user.id, 500, interaction.user)
+                    else:
+                        raise Exception("Leveling cog not found")
                     
                     db_user.record_checkin(interaction.user.id, senha, question[0])  # Registra o check-in no banco de dados com a resposta fornecida
                     checkins_count = db_user.count_checkins_by_question(question[0])
-                    print(checkins_count)
+                    
                     if checkins_count <= question[3]:  # Verifica se o número de check-ins ainda está dentro do limite para recompensa secreta
                         embed = discord.Embed(
                             title="🎉 Early Check-in Bonus! 🎉",
@@ -193,7 +200,6 @@ class CheckIn(commands.Cog):
                         rank_name = rank_role.name if rank_role else "Unknown"
                     else:
                         rank_name = "No Rank Yet"
-                    
                     embed = discord.Embed(
                         title="🎉 XP and Level Update! 🎉",
                         description=f"🎉 You gained 500 XP! Your current XP is {xp}, Level {level}, and your rank is {rank_name}.\nYou can see the leaderboard using the `/leaderboard` command.",
@@ -207,12 +213,19 @@ class CheckIn(commands.Cog):
                         "❌ Role not found. Please contact an administrator.",
                         ephemeral=True
                     )
+                    response_sent = True
             except Exception as e:
                 print(f"Error assigning role: {e}")
-                await interaction.response.send_message(
-                    "❌ An error occurred while assigning the role. Please contact an administrator.",
-                    ephemeral=True
-                )
+                if response_sent:
+                    await interaction.followup.send(
+                        "❌ An error occurred while assigning the role. Please contact an administrator.",
+                        ephemeral=True
+                    )
+                else:
+                    await interaction.response.send_message(
+                        "❌ An error occurred while assigning the role. Please contact an administrator.",
+                        ephemeral=True
+                    )
             
             
             # Log the successful check-in
