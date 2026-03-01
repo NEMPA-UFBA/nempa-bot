@@ -13,7 +13,7 @@ REQUIRED_FIELDS = [
     "Area of interest:",
 ]
 
-MIN_LENGTH = 150
+MIN_LENGTH = 200
 
 def validate_introduction(content: str) -> list[str]:
     return [f for f in REQUIRED_FIELDS if f.lower() not in content.lower()]
