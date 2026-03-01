@@ -71,18 +71,7 @@ class Introduction(commands.Cog):
             print(f"Erro: {e}")
             
         # Atualiza o total de membros no canal de membros
-        members_channel = guild.get_channel(MEMBERS_CHANNEL_ID)
-        if not members_channel:
-            print("Canal de membros não encontrado.")
-            return
-        
-        try:
-            total_members = sum(1 for m in guild.members if member_role in m.roles)
-            await members_channel.edit(name=f"👥 Members: {total_members}")
-        except discord.Forbidden:
-            print("Sem permissão para editar o canal de membros.")
-        except Exception as e:
-            print(f"Erro ao atualizar canal de membros: {e}")
+        await self.update_members_channel(guild)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
@@ -91,19 +80,25 @@ class Introduction(commands.Cog):
     
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        print(f"{member.display_name} left the server. Updating member count...")
-        guild = member.guild
+        if member.guild.get_role(MEMBER_ROLE_ID) not in member.roles:
+            return  # Se o membro não tinha o cargo de membro, não atualizamos o contador
+        
+        await self.update_members_channel(member.guild)
+    
+    async def update_members_channel(self, guild: discord.Guild):
+        """
+        Atualiza o nome do canal de membros com o número atual de membros que possuem o cargo de membro.
+        O discord só permite editar o nome do canala a cada 10 minutos, então não podemos atualizar a cada mudança.
+        """
+        await guild.chunk()
         members_channel = guild.get_channel(MEMBERS_CHANNEL_ID)
         if not members_channel:
             print("Canal de membros não encontrado.")
             return
-        
-        if member.guild.get_role(MEMBER_ROLE_ID) not in member.roles:
-            return  # Se o membro não tinha o cargo de membro, não atualizamos o contador
-        
         try:
-            total_members = sum(1 for m in guild.members if guild.get_role(MEMBER_ROLE_ID) in m.roles)
+            total_members = len(guild.get_role(MEMBER_ROLE_ID).members)
             await members_channel.edit(name=f"👥 Members: {total_members}")
+            print(f"Atualizado canal de membros: {total_members} membros.")
         except discord.Forbidden:
             print("Sem permissão para editar o canal de membros.")
         except Exception as e:
