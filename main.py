@@ -4,7 +4,6 @@ import discord
 from aiohttp import web
 from discord.ext import commands
 from dotenv import load_dotenv
-from datetime import datetime
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -41,11 +40,8 @@ class MyBot(commands.Bot):
     # EVENTO DE BOAS-VINDAS
     async def on_member_join(self, member: discord.Member):
         channel = member.guild.get_channel(ID_WELCOME_CHANNEL)
-        # Verifica se a data atual está entre os dias 23 e 27
-        day = datetime.now().day
-        month = datetime.now().month
-        if 23 <= day <= 27 and month == 2:  # Verifica se é fevereiro e se o dia está entre 23 e 27
-                await member.add_roles(member.guild.get_role(1475270433107349545))  # Adiciona o cargo de "Olympic Week" automaticamente
+        
+        await member.add_roles(member.guild.get_role(1477668654957989939))  # Adiciona o cargo de "Newcomer" automaticamente
         
         if channel:
             embed = discord.Embed(
