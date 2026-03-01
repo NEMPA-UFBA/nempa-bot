@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from database.users import db_user
 
 INTRODUCTION_CHANNEL_ID = 1465414418480365727
 MEMBERS_CHANNEL_ID = 1477713471129915593
@@ -84,6 +85,8 @@ class Introduction(commands.Cog):
             return  # Se o membro não tinha o cargo de membro, não atualizamos o contador
         
         await self.update_members_channel(member.guild)
+        db_user.delete_user(member.id)  # Remove o usuário do banco de dados ao sair
+        
     
     async def update_members_channel(self, guild: discord.Guild):
         """

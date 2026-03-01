@@ -154,5 +154,13 @@ class UserDatabaseManager:
         except Exception as e:
             print(f"Erro ao obter leaderboard: {e}")
             return []
+    
+    def delete_user(self, user_id):
+        try:
+            self.cursor.execute("DELETE FROM checkins WHERE user_id = ?", (user_id,))
+            self.cursor.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+            self.conn.commit()
+        except Exception as e:
+            print(f"Erro ao deletar usuário: {e}")
 
 db_user = UserDatabaseManager()  # Instância global do gerenciador de banco de dados
