@@ -7,7 +7,7 @@ VISITOR_ROLE_ID = 1477668654957989939
 
 REQUIRED_FIELDS = [
     "Name:",
-    "Age:",
+    "Age Range:",
     "City/Country:",
     "Education level:",
     "Area of interest:",
