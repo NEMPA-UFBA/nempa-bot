@@ -106,6 +106,31 @@ class Introduction(commands.Cog):
             print("Sem permissão para editar o canal de membros.")
         except Exception as e:
             print(f"Erro ao atualizar canal de membros: {e}")
+    
+    async def default_newcomer_permissions(self, channelOrCategory: discord.abc.GuildChannel | discord.CategoryChannel):
+        await channelOrCategory.set_permissions(
+            channelOrCategory.guild.get_role(VISITOR_ROLE_ID),
+            view_channel=False,
+            connect=False,
+            create_instant_invite=False,
+            send_messages=False,
+            read_message_history=False,
+            add_reactions=False,
+            speak=False,
+            use_application_commands=False,
+            create_public_threads=False,
+            create_private_threads=False,
+            send_messages_in_threads=False,
+        )
+    
+    @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel: discord.abc.GuildChannel):
+        await self.default_newcomer_permissions(channel)
+    
+    @commands.Cog.listener()
+    async def on_guild_category_create(self, category: discord.CategoryChannel):
+        await self.default_newcomer_permissions(category)
+        
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Introduction(bot))
