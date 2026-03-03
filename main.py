@@ -16,6 +16,7 @@ class MyBot(commands.Bot):
         intents = discord.Intents.default()
         intents.message_content = True 
         intents.members = True  # ESSENCIAL para detectar novos membros
+        intents.guilds = True
         super().__init__(
             command_prefix="!!",
             intents=intents,
