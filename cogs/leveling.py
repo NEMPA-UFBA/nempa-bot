@@ -10,6 +10,83 @@ RANKS = {
     50: 1465905628546470021  # Nível 50: Rank "Teacher"
 }
 
+def get_rank_for_level(level):
+    """Retorna o cargo apropriado para o nível do usuário"""
+    if level >= 50:
+        return RANKS[50]  # Teacher
+    elif level >= 20:
+        return RANKS[20]  # Scientist
+    elif level >= 10:
+        return RANKS[10]  # Student
+    elif level >= 5:
+        return RANKS[5]   # Beginner
+    return None
+
+async def update_member_rank(member, level):
+    rank = get_rank_for_level(level)
+    
+    if rank:
+        role = member.guild.get_role(rank)
+        if role:
+            try:
+                await member.add_roles(role)
+                # Remove roles de níveis anteriores
+                for lvl, r_id in RANKS.items():
+                    if lvl < level:
+                        old_role = member.guild.get_role(r_id)
+                        if old_role and old_role in member.roles:
+                            await member.remove_roles(old_role)
+                print(f"Role {role.name} added to {member.name}")
+                
+                # Opcional: Enviar mensagem no canal
+                channel = member.guild.system_channel or member.guild.text_channels[0]
+                await channel.send(f"🎖️ {member.mention} reached the Rank **{str(role.name[7:]).capitalize()}**!")
+            except discord.Forbidden:
+                print("Error: The bot does not have permission to manage roles.")
+            except Exception as e:
+                print(f"Error adding role: {e}")
+    
+    # Verifica se o nível atual do utilizador está no nosso dicionário de RANKS
+    # if level in RANKS or level > max(RANKS.keys()):
+    #     role_id = RANKS[level] if level in RANKS else RANKS[max(RANKS.keys())]
+    #     role = member.guild.get_role(role_id)
+    #     if role:
+    #         try:
+    #             await member.add_roles(role)
+    #             await member.remove_roles(*[r for r in member.roles if r.id in RANKS.values() and r != role])
+    #             print(f"Role {role.name} added to {member.name}")
+                
+    #             # Opcional: Enviar mensagem no canal
+    #             channel = member.guild.system_channel or member.guild.text_channels[0]
+    #             await channel.send(f"🎖️ {member.mention} reached the Rank **{str(role.name[7:]).capitalize()}**!")
+    #         except discord.Forbidden:
+    #             print("Error: The bot does not have permission to manage roles.")
+    #         except Exception as e:
+    #             print(f"Error adding role: {e}")
+
+async def add_xp(user_id, amount, member: discord.Member = None):
+    data = db_user.get_user(user_id)
+    if data:
+        xp, level = data
+    else:
+        xp, level = 0, 1
+
+    xp += amount
+    next_level_xp = 100 * (level ** 2)
+
+    leveled_up = False
+    while xp >= next_level_xp:
+        level += 1
+        leveled_up = True
+        next_level_xp = 100 * (level ** 2)
+
+    db_user.update_user(user_id, xp, level)
+
+    if leveled_up and member:
+        await update_member_rank(member, level)
+
+    return xp, level
+
 class Leveling(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -43,14 +120,19 @@ class Leveling(commands.Cog):
         await self.bot.process_commands(message)
 
     async def update_member_rank(self, member, level):
-        # Verifica se o nível atual do utilizador está no nosso dicionário de RANKS
-        if level in RANKS or level > max(RANKS.keys()):
-            role_id = RANKS[level] if level in RANKS else RANKS[max(RANKS.keys())]
-            role = member.guild.get_role(role_id)
+        rank = get_rank_for_level(level)
+    
+        if rank:
+            role = member.guild.get_role(rank)
             if role:
                 try:
                     await member.add_roles(role)
-                    await member.remove_roles(*[r for r in member.roles if r.id in RANKS.values() and r != role])
+                    # Remove roles de níveis anteriores
+                    for lvl, r_id in RANKS.items():
+                        if lvl < level:
+                            old_role = member.guild.get_role(r_id)
+                            if old_role and old_role in member.roles:
+                                await member.remove_roles(old_role)
                     print(f"Role {role.name} added to {member.name}")
                     
                     # Opcional: Enviar mensagem no canal
